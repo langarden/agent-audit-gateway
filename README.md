@@ -1,18 +1,48 @@
 # agent-audit-gateway
 
-An **HTTP audit gateway** for AI agent tool calls: transport + auth +
-rate-limit in front of a fail-closed audit engine. Deploy one endpoint,
-`POST /audit_call`, and every agent tool invocation gets a verdict
-(allow / deny / human) with a verifiable trail.
+> **An HTTP audit gateway for AI agent tool calls** — transport + bearer auth +
+> rate limit in front of a fail-closed audit engine. **Default OFF. Loopback by
+> default. A gateway fault can never ALLOW.**
 
-*Research prototype / AI-assisted development. MIT licensed.*
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Python](https://img.shields.io/badge/python-3.9%2B-blue)
+![Tests](https://img.shields.io/badge/tests-34%20passed-green)
+![Deps](https://img.shields.io/badge/runtime%20deps-0-green)
+![Status](https://img.shields.io/badge/status-research%20prototype-orange)
 
-## Why
+[中文版](docs/README.zh-CN.md) · *Research prototype / AI-assisted development.*
 
-[agent-call-audit](https://gitcode.com/gcw_MKhSyoGN/agent-call-audit) is the
-engine; this repository is the deployable service layer around it. The gateway
-**never re-implements adjudication** — it is transport, bearer auth and rate
-limiting only. A gateway fault can never ALLOW (fail-closed).
+---
+
+Deploy one endpoint, `POST /audit_call`, and every agent tool invocation gets a
+verdict (allow / deny / human) with a verifiable trail — without rewriting your
+agent framework. The gateway **never re-implements adjudication**: it is
+transport, bearer auth and rate limiting only.
+
+## Why a gateway?
+
+Your agent already has capabilities; what it lacks is an **enforcement point**
+between the caller and the action. `agent-audit-gateway` gives you:
+
+- **transport layer only** — adjudication lives in the vendored engine
+- **hash-only credentials** — caller registry stores sha256, never plaintext
+- **timeout = deny** — an adjudication over budget returns `ERR_TIMEOUT`
+  without consulting the engine (fail-closed)
+- **default OFF** — no listening socket unless you opt in; loopback by default
+
+## Product family
+
+Part of the **Verifiable-agent family** — one fail-closed design language:
+
+| Repo | Role |
+|:--|:--|
+| [agent-call-audit](https://gitcode.com/gcw_MKhSyoGN/agent-call-audit) | audit **engine** for agent tool calls |
+| [agent-memory-ledger](https://gitcode.com/gcw_MKhSyoGN/agent-memory-ledger) | verifiable **memory** layer |
+| **agent-audit-gateway** | the engine as an HTTP **gateway** (this repo) |
+| [agent-route-grid](https://gitcode.com/gcw_MKhSyoGN/agent-route-grid) | audited multi-agent **routing** |
+
+The engine is **vendored** (`audit_guard/`, from agent-call-audit v0.1.0, same
+MIT maintainers) so this package is self-contained with zero dependencies.
 
 ## Install
 
@@ -22,9 +52,7 @@ pip install agent-audit-gateway   # once published
 pip install -e .
 ```
 
-Zero runtime dependencies. Python 3.9+. The audit engine is vendored
-(`audit_guard/`, from agent-call-audit v0.1.0, same MIT maintainers) so the
-package is self-contained.
+Zero runtime dependencies. Python 3.9+.
 
 ## Quick start (library)
 
@@ -47,15 +75,7 @@ print(pipeline.adjudicate({
 }))
 ```
 
-Run the seven-scenario walkthrough:
-
-```bash
-python examples/demo.py
-```
-
 ## Run the HTTP gateway (default OFF)
-
-The gateway binds **nothing** unless you opt in. Even then it binds loopback.
 
 ```bash
 set AUDIT_GATEWAY_ENABLE=1
@@ -63,36 +83,21 @@ set AUDIT_GATEWAY_PORT=12787
 python -m aag.server
 ```
 
-Then call it from another shell:
+Then call it: `python examples/client.py`.
 
-```bash
-python examples/client.py
+## Proof of life
+
+Real output from `python examples/demo.py` (seven scenarios):
+
 ```
-
-## API
-
-`POST /audit_call` with `Authorization: Bearer <token>`
-
-Request body:
-
-```json
-{
-  "request": {
-    "caller_id": "agent-alpha",
-    "credential": "gateway-token-alpha-2026",
-    "target_capability": "data.lookup",
-    "action_type": "read",
-    "data_class": "public",
-    "request_hash": "sha256-of-payload",
-    "nonce": "unique-per-caller",
-    "timestamp": 1700000000.0
-  },
-  "payload": { "optional": "body" }
-}
+1) allow                    -> decision=allow  FAIL_CLOSED=False
+2) auth deny (bad token)    -> ERR_AUTH_FAILED
+3) red-line deny            -> ERR_RED_LINE (DEMO-RL-001)
+4) replay deny (same nonce) -> ERR_REPLAY
+5) hash-mismatch deny       -> ERR_HASH_MISMATCH
+6) least-privilege deny     -> ERR_CAPABILITY_NOT_GRANTED
+7) timeout (50ms budget)    -> ERR_TIMEOUT  FAIL_CLOSED=True
 ```
-
-Response: `{ "caller_id", "decision", "reason_code", "risk_level",
-"matched_rules", "trace_id", "latency_ms", "fail_closed" }`
 
 ## Fail-closed invariants
 
@@ -100,11 +105,23 @@ Response: `{ "caller_id", "decision", "reason_code", "risk_level",
 |:--|:--|
 | Default OFF | no listening socket unless `AUDIT_GATEWAY_ENABLE=1`; loopback by default |
 | Transport only | adjudication stays in the vendored engine; gateway never allows |
-| Auth fail-closed | `Bearer` token checked against sha256 registry; missing/unknown/disabled -> deny |
-| Timeout deny | adjudication over `timeout_ms` -> `ERR_TIMEOUT` without consulting the engine |
-| Error -> deny | any unexpected exception maps to `ERR_INTERNAL` deny, never allow |
-| Rate limited | per-IP fixed window; transport-level only, never auth bypass |
-| No secrets on disk | registry stores sha256 hashes only; no plaintext credentials |
+| Auth fail-closed | `Bearer` token vs sha256 registry; missing/unknown/disabled -> deny |
+| Timeout deny | adjudication over `timeout_ms` -> `ERR_TIMEOUT` without the engine |
+| Error -> deny | any unexpected exception maps to `ERR_INTERNAL` deny |
+| Rate limited | per-IP fixed window; transport-level only |
+| No secrets on disk | registry stores sha256 hashes only |
+
+## HTTP API
+
+```
+POST /audit_call
+Authorization: Bearer <token>
+{ "request": { caller_id, credential, target_capability, action_type, data_class,
+               request_hash, nonce, timestamp },
+  "payload": {...} | null }
+→ { caller_id, decision, reason_code, risk_level, matched_rules,
+    trace_id, latency_ms, fail_closed }
+```
 
 ## Architecture
 
@@ -118,18 +135,19 @@ aag/
 └── server.py     launcher (AUDIT_GATEWAY_ENABLE-gated)
 rules/           example caller registry (hashes only)
 examples/        demo.py (library) + client.py (HTTP)
-tests/           34 unit + loopback HTTP integration tests
+tests/           34 tests (incl. loopback HTTP integration)
 ```
 
-## Contributing / Security
+## Roadmap ideas
+
+- Streamable HTTP / MCP binding over the same pipeline
+- OpenTelemetry-style audit event export
+- Caller registry rotation with dual confirmation
+
+## Contributing / Security / License
 
 - [CONTRIBUTING.md](CONTRIBUTING.md) — fail-closed first, sanitized commits,
   green tests.
-- [SECURITY.md](SECURITY.md) — report privately; reference implementation,
-  not a hardened product.
-
-## License
-
-MIT — see [LICENSE](LICENSE). Maintainers: `agent-audit-gateway maintainers`.
-Engine vendored from [agent-call-audit](https://gitcode.com/gcw_MKhSyoGN/agent-call-audit)
-v0.1.0 (MIT).
+- [SECURITY.md](SECURITY.md) — report privately; reference implementation.
+- [LICENSE](LICENSE) — MIT, `agent-audit-gateway maintainers`. Engine vendored
+  from agent-call-audit (MIT).
