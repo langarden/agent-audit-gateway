@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-audit-gateway"
+version = "0.1.0"
+description = "An HTTP audit gateway for AI agent tool calls: transport + bearer auth + rate limit in front of a fail-closed audit engine (research prototype / AI-assisted development)."
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [{name = "agent-audit-gateway maintainers", email = "2307788504@qq.com"}]
+keywords = ["agent", "audit", "gateway", "mcp", "fail-closed", "llm", "http"]
+
+[project.urls]
+Homepage = "https://gitcode.com/gcw_MKhSyoGN/agent-audit-gateway"
+
+[tool.setuptools.packages.find]
+include = ["aag*", "audit_guard*"]

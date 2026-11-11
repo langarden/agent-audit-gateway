@@ -1,0 +1,33 @@
+{
+  "_comment": "EXAMPLE caller registry. Only sha256 hashes of credentials are stored, never plaintext tokens. Drift tokens used to derive the hashes: gateway-token-alpha-2026 / gateway-token-readonly-2026 / gateway-token-viewer-2026 (synthetic, no value).",
+  "schema": "audit.call/caller-registry/v1",
+  "callers": [
+    {
+      "caller_id": "agent-alpha",
+      "credential_hash": "sha256:886b1fd37e243f485a84883b2f65120a93afe55b88c2ace5005f812258b9fdbe",
+      "status": "active",
+      "capabilities": ["data.lookup", "content.publish", "money.transfer"],
+      "max_action": "spend",
+      "max_data_class": "internal",
+      "note": "primary demo caller"
+    },
+    {
+      "caller_id": "agent-readonly",
+      "credential_hash": "sha256:6d5899a3394e2af0ede7f7542b82840fc2e180e2453501489c3c3def5ddaa76e",
+      "status": "active",
+      "capabilities": ["data.lookup"],
+      "max_action": "read",
+      "max_data_class": "public",
+      "note": "least-privilege demo caller"
+    },
+    {
+      "caller_id": "agent-viewer",
+      "credential_hash": "sha256:59b3d9b0abc98d3128600e997d85417bcc56987e7984eab05be9d45690208526",
+      "status": "disabled",
+      "capabilities": ["data.lookup"],
+      "max_action": "read",
+      "max_data_class": "public",
+      "note": "disabled account; any auth attempt must fail with ERR_AUTH_FAILED"
+    }
+  ]
+}
