@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agent-audit-gateway"
-version = "0.1.0"
+version = "0.1.1"
 description = "An HTTP audit gateway for AI agent tool calls: transport + bearer auth + rate limit in front of a fail-closed audit engine (research prototype / AI-assisted development)."
 readme = "README.md"
 requires-python = ">=3.9"
