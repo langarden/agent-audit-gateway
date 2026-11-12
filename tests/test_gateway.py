@@ -26,7 +26,7 @@ REGISTRY_JSON = {
     ]
 }
 
-TOKEN = "gateway-token-alpha-2026"
+TOKEN = "gateway-token-alpha-2026"  # DEMO DATA — NOT A REAL CREDENTIAL
 
 
 class GatewayServer:

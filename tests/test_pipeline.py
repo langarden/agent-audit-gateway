@@ -7,6 +7,7 @@ from aag.pipeline import AuditPipeline
 from audit_guard.engine import hash_payload
 
 TOKENS = {
+    # DEMO DATA — NOT A REAL CREDENTIAL
     "agent-alpha": "gateway-token-alpha-2026",
     "agent-readonly": "gateway-token-readonly-2026",
 }

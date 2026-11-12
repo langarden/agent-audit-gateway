@@ -24,7 +24,8 @@ def hash_payload(obj):
     ).hexdigest()
 
 
-def audit_call(request, payload=None, token="gateway-token-alpha-2026"):
+def audit_call(request, payload=None, token="gateway-token-alpha-2026"):  # DEMO DATA — NOT A REAL CREDENTIAL
+    """Call the audit gateway. `token` is a synthetic demo value (see tests)."""
     body = json.dumps({"request": request, "payload": payload}).encode("utf-8")
     r = urllib.request.Request(
         BASE + "/audit_call",
@@ -45,7 +46,7 @@ def audit_call(request, payload=None, token="gateway-token-alpha-2026"):
 def main():
     request = {
         "caller_id": "agent-alpha",
-        "credential": "gateway-token-alpha-2026",
+        "credential": "gateway-token-alpha-2026",  # DEMO DATA — NOT A REAL CREDENTIAL
         "target_capability": "data.lookup",
         "action_type": "read",
         "data_class": "public",
