@@ -4,11 +4,18 @@
 > **故障即拒绝（fail-closed）** 的审计引擎。**默认不监听端口，默认只绑 loopback；
 > 网关自身故障永远不可能放行（ALLOW）。**
 
+```bash
+pip install agent-audit-gateway          # 零依赖，Python 3.9+
+```
+
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![Tests](https://img.shields.io/badge/tests-34%20passed-green)
 ![Deps](https://img.shields.io/badge/runtime%20deps-0-green)
 ![Status](https://img.shields.io/badge/status-research%20prototype-orange)
+
+<a href="https://gitcode.com/gcw_MKhSyoGN/agent-audit-gateway"><img src="https://img.shields.io/badge/GitCode-gcw_MKhSyoGN%2Fagent-audit-gateway-blue" alt="GitCode"></a>
+<a href="https://github.com/langarden/agent-audit-gateway"><img src="https://img.shields.io/badge/GitHub-langarden%2Fagent-audit-gateway-black" alt="GitHub"></a>
 
 > 研究报告级 / AI 辅助开发 · MIT 许可 · 维护者：`agent-audit-gateway maintainers`
 
