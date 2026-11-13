@@ -12,6 +12,9 @@ license = {text = "MIT"}
 authors = [{name = "agent-audit-gateway maintainers", email = "2307788504@qq.com"}]
 keywords = ["agent", "audit", "gateway", "mcp", "fail-closed", "llm", "http"]
 
+[project.scripts]
+agent-audit-gateway-mcp = "aag.mcp_server:main"
+
 [project.urls]
 Homepage = "https://gitcode.com/gcw_MKhSyoGN/agent-audit-gateway"
 

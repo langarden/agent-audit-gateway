@@ -92,6 +92,28 @@ python -m aag.server
 
 Then call it: `python examples/client.py`.
 
+## Run as a Local MCP server (stdio)
+
+Expose the adjudicator as an MCP tool so any MCP client can audit tool calls.
+This is the **Local** form: the server runs on **your** machine over stdio — no
+remote endpoint, no hosted service, credentials stay local.
+
+```bash
+python -m aag.mcp_server          # stdio MCP server (default transport)
+```
+
+It exposes one tool, `audit_call`, that wraps `AuditPipeline.adjudicate`:
+
+| param | meaning |
+|:--|:--|
+| `caller_id`, `credential` | caller identity + bearer credential (checked against the sha256 registry) |
+| `target_capability`, `action_type`, `data_class` | what is being requested |
+| `request_hash`, `nonce`, `timestamp` | request integrity + replay defence |
+| `idempotency_key`, `amount`, `payload`, `currency` | optional |
+
+Fail-closed: any missing/malformed field returns a `deny` decision, never an
+allow. Point your MCP client at the stdio command above to use it.
+
 ## Proof of life
 
 Real output from `python examples/demo.py` (seven scenarios):
